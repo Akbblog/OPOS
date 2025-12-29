@@ -17,10 +17,10 @@ export const config = {
         }
 
         // Simple hardcoded admin check
-        if (credentials.email === 'admin@opos.com' && credentials.password === 'admin123') {
+        if (credentials.email === 'akb@tool.com' && credentials.password === 'Superpass') {
           return {
             id: '1',
-            email: 'admin@opos.com',
+            email: 'akb@tool.com',
             name: 'Admin',
             role: 'admin',
           } as User;

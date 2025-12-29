@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4 md:p-8" suppressHydrationWarning={true}>
       <div className="max-w-5xl w-full">
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight mb-3">OPOS</h1>

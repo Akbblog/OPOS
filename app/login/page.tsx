@@ -48,7 +48,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="admin@opos.com"
+              placeholder="Enter email"
             />
           </div>
           <div>
@@ -70,11 +70,6 @@ export default function LoginPage() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <div className="mt-4 text-sm text-gray-600 text-center">
-          <p>Demo credentials:</p>
-          <p>Email: admin@opos.com</p>
-          <p>Password: admin123</p>
-        </div>
       </div>
     </div>
   );

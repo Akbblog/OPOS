@@ -18,6 +18,7 @@ interface Order {
 interface Settings {
   bikePrices: number[];
   carPrices: number[];
+  currentTokenNumber: number;
 }
 
 interface Product {
@@ -38,7 +39,7 @@ interface Notification {
   createdAt: string;
 }
 
-type TabType = 'overview' | 'products' | 'orders' | 'settings' | 'notifications';
+type TabType = 'overview' | 'products' | 'orders' | 'prices' | 'notifications' | 'settings';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -51,6 +52,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [bikePrices, setBikePrices] = useState('');
   const [carPrices, setCarPrices] = useState('');
+  const [resettingTokens, setResettingTokens] = useState(false);
   
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false);
@@ -99,7 +101,35 @@ export default function AdminPage() {
       setBikePrices(data.bikePrices.join(', '));
       setCarPrices(data.carPrices.join(', '));
     } catch (error) {
-      toast.error('Failed to load settings');
+      console.error('Failed to fetch settings');
+    }
+  };
+
+  const handleTokenReset = async () => {
+    if (!confirm('Are you sure you want to reset the token counter? This will start token numbering from 1 for new orders.')) {
+      return;
+    }
+
+    setResettingTokens(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetTokens: true }),
+      });
+
+      if (res.ok) {
+        const updatedSettings = await res.json();
+        setSettings(updatedSettings);
+        toast.success('Token counter reset successfully');
+      } else {
+        toast.error('Failed to reset token counter');
+      }
+    } catch (error) {
+      console.error('Error resetting tokens:', error);
+      toast.error('Failed to reset token counter');
+    } finally {
+      setResettingTokens(false);
     }
   };
 
@@ -251,6 +281,7 @@ export default function AdminPage() {
             { id: 'overview', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
             { id: 'products', label: 'Products', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
             { id: 'orders', label: 'Orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+            { id: 'prices', label: 'Prices', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1' },
             { id: 'notifications', label: 'Notifications', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
             { id: 'settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
           ].map((item) => (
@@ -300,7 +331,7 @@ export default function AdminPage() {
           <button onClick={handleLogout} className="text-red-400">Logout</button>
         </div>
         <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-          {['overview', 'products', 'orders', 'notifications', 'settings'].map((tab) => (
+          {['overview', 'products', 'orders', 'prices', 'notifications', 'settings'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as TabType)}
@@ -323,7 +354,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <p className="text-slate-500 text-sm mb-1">Total Sales</p>
-                <p className="text-3xl font-bold text-slate-900">${totalSales.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-slate-900">{totalSales.toFixed(2)}</p>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <p className="text-slate-500 text-sm mb-1">Total Orders</p>
@@ -331,11 +362,11 @@ export default function AdminPage() {
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <p className="text-slate-500 text-sm mb-1">Bike Sales</p>
-                <p className="text-3xl font-bold text-blue-600">${bikeSales.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-blue-600">{bikeSales.toFixed(2)}</p>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <p className="text-slate-500 text-sm mb-1">Car Sales</p>
-                <p className="text-3xl font-bold text-emerald-600">${carSales.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-emerald-600">{carSales.toFixed(2)}</p>
               </div>
             </div>
 
@@ -416,7 +447,7 @@ export default function AdminPage() {
                       {product.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900 mb-2">${product.price}</p>
+                  <p className="text-2xl font-bold text-slate-900 mb-2">{product.price}</p>
                   {product.description && (
                     <p className="text-sm text-slate-500 mb-4">{product.description}</p>
                   )}
@@ -544,7 +575,7 @@ export default function AdminPage() {
                             {order.category.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-semibold">${order.amount.toFixed(2)}</td>
+                        <td className="py-4 px-6 font-semibold">{order.amount.toFixed(2)}</td>
                         <td className="py-4 px-6 text-slate-600">{new Date(order.timestamp).toLocaleDateString()}</td>
                         <td className="py-4 px-6 text-slate-600">{new Date(order.timestamp).toLocaleTimeString()}</td>
                       </tr>
@@ -600,45 +631,169 @@ export default function AdminPage() {
           </div>
         )}
 
+        {activeTab === 'prices' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-slate-900">Price Management</h2>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Bike Prices */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-slate-900">Bike Service Prices</h3>
+                  <button
+                    onClick={() => {
+                      const pricesArray = bikePrices.split(',').map(p => parseFloat(p.trim()) || 0);
+                      pricesArray.push(0);
+                      setBikePrices(pricesArray.join(', '));
+                    }}
+                    className="bg-slate-900 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-800 transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {bikePrices.split(',').map((price, index) => {
+                    const numPrice = parseFloat(price.trim()) || 0;
+                    return (
+                      <div key={index} className="relative">
+                        <div className="p-6 rounded-xl border-2 border-slate-200 bg-white">
+                          <input
+                            type="number"
+                            value={numPrice}
+                            onChange={(e) => {
+                              const pricesArray = bikePrices.split(',').map(p => parseFloat(p.trim()) || 0);
+                              pricesArray[index] = parseFloat(e.target.value) || 0;
+                              setBikePrices(pricesArray.join(', '));
+                            }}
+                            className="w-full text-center text-2xl md:text-3xl font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                          />
+                        </div>
+                        {bikePrices.split(',').length > 1 && (
+                          <button
+                            onClick={() => {
+                              const pricesArray = bikePrices.split(',').map(p => parseFloat(p.trim()) || 0);
+                              pricesArray.splice(index, 1);
+                              setBikePrices(pricesArray.join(', '));
+                            }}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Car Prices */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-slate-900">Car Service Prices</h3>
+                  <button
+                    onClick={() => {
+                      const pricesArray = carPrices.split(',').map(p => parseFloat(p.trim()) || 0);
+                      pricesArray.push(0);
+                      setCarPrices(pricesArray.join(', '));
+                    }}
+                    className="bg-slate-900 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-800 transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {carPrices.split(',').map((price, index) => {
+                    const numPrice = parseFloat(price.trim()) || 0;
+                    return (
+                      <div key={index} className="relative">
+                        <div className="p-6 rounded-xl border-2 border-slate-200 bg-white">
+                          <input
+                            type="number"
+                            value={numPrice}
+                            onChange={(e) => {
+                              const pricesArray = carPrices.split(',').map(p => parseFloat(p.trim()) || 0);
+                              pricesArray[index] = parseFloat(e.target.value) || 0;
+                              setCarPrices(pricesArray.join(', '));
+                            }}
+                            className="w-full text-center text-2xl md:text-3xl font-bold text-slate-900 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                          />
+                        </div>
+                        {carPrices.split(',').length > 1 && (
+                          <button
+                            onClick={() => {
+                              const pricesArray = carPrices.split(',').map(p => parseFloat(p.trim()) || 0);
+                              pricesArray.splice(index, 1);
+                              setCarPrices(pricesArray.join(', '));
+                            }}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <button
+                onClick={handleUpdateSettings}
+                className="w-full bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800 transition-colors"
+              >
+                Save Price Changes
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-slate-900">Settings</h2>
 
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Quick Select Prices</h3>
-              <p className="text-slate-500 text-sm mb-6">Configure the predefined price options shown on the POS screen</p>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Token Management</h3>
+              <p className="text-slate-500 text-sm mb-6">Manage order token numbering system</p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Bike Service Prices</label>
-                  <input
-                    type="text"
-                    value={bikePrices}
-                    onChange={(e) => setBikePrices(e.target.value)}
-                    placeholder="100, 150, 200"
-                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Enter prices separated by commas</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-slate-900">Current Token Number</h4>
+                    <p className="text-sm text-slate-500">Next order will receive token #{settings?.currentTokenNumber ? settings.currentTokenNumber + 1 : 1}</p>
+                  </div>
+                  <span className="text-2xl font-bold text-blue-600">#{settings?.currentTokenNumber || 0}</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Car Service Prices</label>
-                  <input
-                    type="text"
-                    value={carPrices}
-                    onChange={(e) => setCarPrices(e.target.value)}
-                    placeholder="100, 150, 200"
-                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Enter prices separated by commas</p>
+                
+                <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-red-900">Reset Token Counter</h4>
+                    <p className="text-sm text-red-600">This will reset the token counter to 0. Next order will start from token #1.</p>
+                  </div>
+                  <button
+                    onClick={handleTokenReset}
+                    disabled={resettingTokens}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    {resettingTokens ? 'Resetting...' : 'Reset Tokens'}
+                  </button>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">System Configuration</h3>
+              <p className="text-slate-500 text-sm mb-6">Additional system settings and configurations</p>
               
-              <button
-                onClick={handleUpdateSettings}
-                className="mt-6 bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800 transition-colors"
-              >
-                Save Settings
-              </button>
+              <div className="text-sm text-slate-500">
+                Settings panel - Additional configurations can be added here
+              </div>
             </div>
           </div>
         )}

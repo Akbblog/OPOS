@@ -20,7 +20,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const { bikePrices, carPrices } = await request.json();
+    const { bikePrices, carPrices, resetTokens } = await request.json();
 
     let settings = await Settings.findOne();
     if (!settings) {
@@ -29,6 +29,11 @@ export async function PUT(request: NextRequest) {
 
     if (bikePrices) settings.bikePrices = bikePrices;
     if (carPrices) settings.carPrices = carPrices;
+
+    // Handle token reset
+    if (resetTokens) {
+      settings.currentTokenNumber = 0;
+    }
 
     await settings.save();
     return NextResponse.json(settings);

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useOrderStore } from '@/lib/store';
 import toast from 'react-hot-toast';
-import Receipt from '@/components/Receipt';
 
 interface Settings {
   bikePrices: number[];
@@ -25,8 +24,6 @@ export default function ServicePage() {
   const router = useRouter();
   const { category, amount, setCategory, setAmount, reset } = useOrderStore();
   const [customAmount, setCustomAmount] = useState('');
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<any>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
@@ -84,41 +81,42 @@ export default function ServicePage() {
   };
 
   const handlePlaceOrder = async () => {
+    console.log('handlePlaceOrder called with amount:', amount, 'category:', category);
     if (!category || amount <= 0) {
+      console.log('Validation failed: category or amount invalid');
       toast.error('Please select a valid amount');
       return;
     }
 
     setIsProcessing(true);
+    console.log('Setting isProcessing to true');
 
     try {
+      console.log('Making API call to /api/orders');
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, amount }),
       });
+      console.log('API response status:', res.status);
 
       if (res.ok) {
         const order = await res.json();
-        setOrderDetails(order);
-        setShowReceipt(true);
+        console.log('Order created successfully:', order);
         toast.success('Order placed successfully');
-        reset();
-        setCustomAmount('');
-        setSelectedPrice(null);
+        router.push(`/receipt/${order._id}`);
       } else {
+        const errorData = await res.json();
+        console.log('API error:', errorData);
         toast.error('Failed to place order');
       }
     } catch (error) {
+      console.log('Error in handlePlaceOrder:', error);
       toast.error('Error placing order');
     } finally {
       setIsProcessing(false);
+      console.log('setIsProcessing to false');
     }
-  };
-
-  const handleReceiptClose = () => {
-    setShowReceipt(false);
-    router.push('/');
   };
 
   if (!category || !settings) {
@@ -170,7 +168,7 @@ export default function ServicePage() {
                     <span className={`text-2xl md:text-3xl font-bold ${
                       selectedPrice === price ? 'text-blue-600' : 'text-slate-900'
                     }`}>
-                      ${price}
+                      {price}
                     </span>
                     {selectedPrice === price && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
@@ -204,7 +202,7 @@ export default function ServicePage() {
                           <p className="text-sm text-slate-500">{product.description}</p>
                         )}
                       </div>
-                      <span className="text-xl font-bold text-slate-900">${product.price}</span>
+                      <span className="text-xl font-bold text-slate-900">{product.price}</span>
                     </button>
                   ))}
                 </div>
@@ -213,16 +211,13 @@ export default function ServicePage() {
 
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">Custom Amount</h2>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">$</span>
-                <input
-                  type="number"
-                  value={customAmount}
-                  onChange={(e) => handleCustomAmountChange(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full pl-10 pr-4 py-4 text-2xl font-bold border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
-                />
-              </div>
+              <input
+                type="number"
+                value={customAmount}
+                onChange={(e) => handleCustomAmountChange(e.target.value)}
+                placeholder="0.00"
+                className="w-full px-6 py-6 text-3xl font-bold border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+              />
             </div>
           </div>
 
@@ -238,7 +233,7 @@ export default function ServicePage() {
                 <div className="border-t border-dashed border-slate-200 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-slate-900">Total</span>
-                    <span className="text-3xl font-bold text-slate-900">${amount.toFixed(2)}</span>
+                    <span className="text-3xl font-bold text-slate-900">PKR {amount.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -273,14 +268,6 @@ export default function ServicePage() {
           </div>
         </div>
       </div>
-
-      {showReceipt && orderDetails && (
-        <Receipt 
-          order={orderDetails} 
-          onClose={handleReceiptClose}
-          onPrintComplete={handleReceiptClose}
-        />
-      )}
     </div>
   );
 }

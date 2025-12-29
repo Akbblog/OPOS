@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
+import Settings from '@/lib/models/Settings';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,23 +12,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
     }
 
-    // Get the next token number (first come first serve)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Find the highest token number for today
-    const lastOrder = await Order.findOne({
-      timestamp: { $gte: today }
-    }).sort({ tokenNumber: -1 });
-
-    // Ensure tokenNumber is a valid number, fallback to 1 if not
-    const lastTokenNumber = lastOrder?.tokenNumber && !isNaN(lastOrder.tokenNumber) ? lastOrder.tokenNumber : 0;
-    const tokenNumber = lastTokenNumber + 1;
-
-    // Validate tokenNumber is a valid number
-    if (isNaN(tokenNumber) || tokenNumber <= 0) {
-      return NextResponse.json({ error: 'Invalid token number generated' }, { status: 500 });
+    // Get and increment token number from settings
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings();
     }
+
+    const tokenNumber = settings.currentTokenNumber + 1;
+    settings.currentTokenNumber = tokenNumber;
+    await settings.save();
 
     const order = new Order({ 
       tokenNumber,

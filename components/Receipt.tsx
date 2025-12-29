@@ -18,102 +18,114 @@ interface ReceiptProps {
   onPrintComplete?: () => void;
 }
 
+export function generateReceiptHTML(order: ReceiptData): string {
+  const styles = `
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: 'Courier New', monospace; 
+        width: 80mm; 
+        padding: 5mm;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+      .receipt-header h1 { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+      .receipt-header p { font-size: 10px; color: #666; }
+      .token-number { text-align: center; font-size: 32px; font-weight: bold; margin: 15px 0; padding: 10px; border: 2px solid #000; }
+      .token-label { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+      .receipt-body { margin-bottom: 10px; }
+      .receipt-row { display: flex; justify-content: space-between; padding: 3px 0; }
+      .receipt-row.total { border-top: 1px dashed #000; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 14px; }
+      .receipt-footer { text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
+      .receipt-footer p { font-size: 10px; color: #666; }
+      .service-type { text-align: center; font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 10px 0; padding: 8px; background: #f0f0f0; }
+      @media print { body { width: 80mm; } }
+    </style>
+  `;
+
+  const tokenDisplay = order.tokenNumber ? String(order.tokenNumber).padStart(3, '0') : order._id.slice(-6).toUpperCase();
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Receipt - Token #${tokenDisplay}</title>
+        ${styles}
+      </head>
+      <body>
+        <div class="receipt-header">
+          <h1>OPOS</h1>
+          <p>Point of Sale System</p>
+        </div>
+        <div class="token-label">TOKEN NUMBER</div>
+        <div class="token-number">${tokenDisplay}</div>
+        <div class="service-type">${order.category.toUpperCase()} SERVICE</div>
+        <div class="receipt-body">
+          <div class="receipt-row">
+            <span>Receipt ID:</span>
+            <span>#${order._id.slice(-8).toUpperCase()}</span>
+          </div>
+          <div class="receipt-row">
+            <span>Date:</span>
+            <span>${new Date(order.timestamp).toLocaleDateString()}</span>
+          </div>
+          <div class="receipt-row">
+            <span>Time:</span>
+            <span>${new Date(order.timestamp).toLocaleTimeString()}</span>
+          </div>
+          <div class="receipt-row">
+            <span>Service:</span>
+            <span>${order.category.charAt(0).toUpperCase() + order.category.slice(1)} Service</span>
+          </div>
+          <div class="receipt-row total">
+            <span>TOTAL:</span>
+            <span>{order.amount.toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="receipt-footer">
+          <p>Thank you for your business!</p>
+          <p>Visit again soon</p>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
 export default function Receipt({ order, onClose, onPrintComplete }: ReceiptProps) {
+  console.log('Receipt component called with props:', { order, onClose: !!onClose, onPrintComplete: !!onPrintComplete });
+  
+  console.log('Receipt component rendering started');
   const receiptRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
 
-  const handlePrint = useCallback(() => {
-    const printContent = receiptRef.current;
-    if (!printContent) return;
+  console.log('Receipt component state initialized');
 
-    const printWindow = window.open('', '_blank', 'width=300,height=600');
-    if (!printWindow) {
-      window.print();
-      return;
-    }
+    const handlePrint = useCallback(() => {
+      console.log('handlePrint called');
+      const printWindow = window.open('', '_blank', 'width=300,height=600');
+      if (!printWindow) {
+        console.log('Print window failed to open, using window.print');
+        window.print();
+        return;
+      }
 
-    const styles = `
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-          font-family: 'Courier New', monospace; 
-          width: 80mm; 
-          padding: 5mm;
-          font-size: 12px;
-          line-height: 1.4;
-        }
-        .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-        .receipt-header h1 { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
-        .receipt-header p { font-size: 10px; color: #666; }
-        .token-number { text-align: center; font-size: 32px; font-weight: bold; margin: 15px 0; padding: 10px; border: 2px solid #000; }
-        .token-label { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
-        .receipt-body { margin-bottom: 10px; }
-        .receipt-row { display: flex; justify-content: space-between; padding: 3px 0; }
-        .receipt-row.total { border-top: 1px dashed #000; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 14px; }
-        .receipt-footer { text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
-        .receipt-footer p { font-size: 10px; color: #666; }
-        .service-type { text-align: center; font-size: 16px; font-weight: bold; text-transform: uppercase; margin: 10px 0; padding: 8px; background: #f0f0f0; }
-        @media print { body { width: 80mm; } }
-      </style>
-    `;
+      const htmlContent = generateReceiptHTML(order);
+      console.log('Generated HTML content length:', htmlContent.length);
 
-    const tokenDisplay = order.tokenNumber ? String(order.tokenNumber).padStart(3, '0') : order._id.slice(-6).toUpperCase();
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+        onPrintComplete?.();
+      }, 250);
+    }, [order, onPrintComplete]);
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Receipt - Token #${tokenDisplay}</title>
-          ${styles}
-        </head>
-        <body>
-          <div class="receipt-header">
-            <h1>OPOS</h1>
-            <p>Point of Sale System</p>
-          </div>
-          <div class="token-label">TOKEN NUMBER</div>
-          <div class="token-number">${tokenDisplay}</div>
-          <div class="service-type">${order.category.toUpperCase()} SERVICE</div>
-          <div class="receipt-body">
-            <div class="receipt-row">
-              <span>Receipt ID:</span>
-              <span>#${order._id.slice(-8).toUpperCase()}</span>
-            </div>
-            <div class="receipt-row">
-              <span>Date:</span>
-              <span>${new Date(order.timestamp).toLocaleDateString()}</span>
-            </div>
-            <div class="receipt-row">
-              <span>Time:</span>
-              <span>${new Date(order.timestamp).toLocaleTimeString()}</span>
-            </div>
-            <div class="receipt-row">
-              <span>Service:</span>
-              <span>${order.category.charAt(0).toUpperCase() + order.category.slice(1)} Service</span>
-            </div>
-            <div class="receipt-row total">
-              <span>TOTAL:</span>
-              <span>$${order.amount.toFixed(2)}</span>
-            </div>
-          </div>
-          <div class="receipt-footer">
-            <p>Thank you for your business!</p>
-            <p>Visit again soon</p>
-          </div>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-      onPrintComplete?.();
-    }, 250);
-  }, [order, onPrintComplete]);
+  console.log('Receipt component about to return JSX');
 
   const handleSendEmail = async () => {
     if (!email) {
@@ -151,8 +163,8 @@ export default function Receipt({ order, onClose, onPrintComplete }: ReceiptProp
   };
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', zIndex: 10000 }}>
-      <div style={{ backgroundColor: 'white', border: '2px solid red', borderRadius: '1rem', maxWidth: '40rem', width: '100%', maxHeight: '80vh', overflow: 'auto' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', zIndex: 10000 }}>
+        <div style={{ backgroundColor: 'white', border: '2px solid red', borderRadius: '1rem', maxWidth: '40rem', width: '100%', maxHeight: '80vh', overflow: 'auto' }}>
         <div ref={receiptRef} style={{ padding: '2rem' }}>
           <div className="text-center border-b border-gray-200 pb-4 mb-4">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">OPOS</h1>
@@ -191,7 +203,7 @@ export default function Receipt({ order, onClose, onPrintComplete }: ReceiptProp
           <div className="border-t border-dashed border-gray-300 pt-4 mt-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-              <span className="text-2xl font-bold text-gray-900">${order.amount.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-gray-900">{order.amount.toFixed(2)}</span>
             </div>
           </div>
           
