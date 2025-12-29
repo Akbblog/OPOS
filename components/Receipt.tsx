@@ -151,9 +151,9 @@ export default function Receipt({ order, onClose, onPrintComplete }: ReceiptProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div ref={receiptRef} className="p-6">
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', zIndex: 10000 }}>
+      <div style={{ backgroundColor: 'white', border: '2px solid red', borderRadius: '1rem', maxWidth: '40rem', width: '100%', maxHeight: '80vh', overflow: 'auto' }}>
+        <div ref={receiptRef} style={{ padding: '2rem' }}>
           <div className="text-center border-b border-gray-200 pb-4 mb-4">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">OPOS</h1>
             <p className="text-xs text-gray-500 mt-1">Point of Sale System</p>
