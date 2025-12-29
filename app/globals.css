@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
+/* Modern Light Theme - Clean & Minimal */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --accent: #1e293b;
+  --accent-light: #64748b;
 }
 
 @theme inline {
@@ -12,55 +17,160 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
+  background: #f1f5f9;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
 }
 
+/* Modern Card Styles */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Enhanced Input Styles - High Visibility */
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  background: #ffffff !important;
+  border: 2px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+}
+
+input::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+}
+
+input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  outline: none !important;
+}
+
+/* Price Selection Cards */
+.price-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.price-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.price-card.selected {
+  border-color: #1e293b;
+  background: #f8fafc;
+}
+
+/* Primary Button */
+.btn-primary {
+  background: #1e293b;
+  color: white;
+  font-weight: 700;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+/* Order Summary Panel */
+.summary-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+/* Service Type Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-bike {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-car {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid #e2e8f0;
+  border-top-color: #1e293b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Print Styles */
 @media print {
-  .print-modal {
-    position: static;
-    background: white;
-    box-shadow: none;
-    margin: 0;
-    padding: 10px;
-    width: 80mm;
-    max-width: 80mm;
-    font-size: 12px;
-    line-height: 1.2;
-  }
-  .print-modal h1 {
-    font-size: 18px;
-    margin-bottom: 5px;
-  }
-  .print-modal h2 {
-    font-size: 16px;
-    margin-bottom: 5px;
-  }
-  .print-modal p {
-    margin-bottom: 3px;
-  }
-  .print-modal .space-y-3 > * + * {
-    margin-top: 3px;
-  }
   body * {
     visibility: hidden;
   }
-  .print-modal,
-  .print-modal * {
+  .print-area,
+  .print-area * {
     visibility: visible;
   }
-  .print-modal {
+  .print-area {
     position: absolute;
     left: 0;
     top: 0;
+    width: 80mm;
+    padding: 10px;
+    font-size: 12px;
   }
 }

@@ -22,24 +22,22 @@ interface Product {
 export default function ServicePage() {
   const params = useParams();
   const router = useRouter();
-  const { category, amount, setCategory, setAmount, reset } = useOrderStore();
+  const { category, amount, setCategory, setAmount } = useOrderStore();
   const [customAmount, setCustomAmount] = useState('');
   const [settings, setSettings] = useState<Settings | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const type = params.type as 'bike' | 'car';
+  const type = params.type as string;
 
   useEffect(() => {
     if (type === 'bike' || type === 'car') {
       setCategory(type);
-    } else {
-      router.push('/');
     }
     fetchSettings();
     fetchProducts();
-  }, [type, setCategory, router]);
+  }, [type, setCategory]);
 
   const fetchSettings = async () => {
     try {
@@ -47,7 +45,7 @@ export default function ServicePage() {
       const data = await res.json();
       setSettings(data);
     } catch (error) {
-      toast.error('Failed to load settings');
+      console.error('Failed to fetch settings');
     }
   };
 
@@ -61,11 +59,11 @@ export default function ServicePage() {
     }
   };
 
-  const prices = settings ? (type === 'bike' ? settings.bikePrices : settings.carPrices) : [100, 150, 200];
+  const prices = category === 'bike' ? settings?.bikePrices || [] : settings?.carPrices || [];
 
   const handlePriceSelect = (price: number) => {
-    setAmount(price);
     setSelectedPrice(price);
+    setAmount(price);
     setCustomAmount('');
   };
 
@@ -80,191 +78,190 @@ export default function ServicePage() {
     }
   };
 
+  const handleClear = () => {
+    setSelectedPrice(null);
+    setCustomAmount('');
+    setAmount(0);
+  };
+
   const handlePlaceOrder = async () => {
-    console.log('handlePlaceOrder called with amount:', amount, 'category:', category);
     if (!category || amount <= 0) {
-      console.log('Validation failed: category or amount invalid');
-      toast.error('Please select a valid amount');
+      toast.error('Please select an amount');
       return;
     }
 
     setIsProcessing(true);
-    console.log('Setting isProcessing to true');
 
     try {
-      console.log('Making API call to /api/orders');
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, amount }),
       });
-      console.log('API response status:', res.status);
 
       if (res.ok) {
         const order = await res.json();
-        console.log('Order created successfully:', order);
-        toast.success('Order placed successfully');
+        toast.success(`Order #${order.tokenNumber} placed!`);
         router.push(`/receipt/${order._id}`);
       } else {
         const errorData = await res.json();
-        console.log('API error:', errorData);
-        toast.error('Failed to place order');
+        console.error('Order error:', errorData);
+        toast.error(errorData.error || 'Failed to place order');
       }
     } catch (error) {
-      console.log('Error in handlePlaceOrder:', error);
-      toast.error('Error placing order');
+      console.error('Network error:', error);
+      toast.error('Connection error. Please try again.');
     } finally {
       setIsProcessing(false);
-      console.log('setIsProcessing to false');
     }
   };
 
   if (!category || !settings) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-pulse flex items-center gap-3">
-          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" />
-          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-        </div>
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="spinner w-10 h-10"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => router.push('/')}
-            className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
-          >
-            <svg className="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 uppercase">{category} Service</h1>
-            <p className="text-slate-500 text-sm">Select service amount</p>
+    <div className="min-h-screen bg-slate-100">
+      {/* Top Bar */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/')}
+              className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+            >
+              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-2xl font-bold text-slate-900 uppercase">{category} SERVICE</h1>
+          </div>
+          <div className={`badge ${category === 'bike' ? 'badge-bike' : 'badge-car'}`}>
+            {category}
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Select</h2>
-              <div className="grid grid-cols-3 gap-3">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="grid lg:grid-cols-3 gap-6">
+          
+          {/* Left Panel - Order Summary */}
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="summary-panel p-6 sticky top-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Order Summary</h2>
+              
+              {/* Selected Amount Display */}
+              <div className="bg-slate-50 rounded-xl p-6 mb-6">
+                <div className="text-center">
+                  <p className="text-sm text-slate-500 mb-2 uppercase tracking-wide font-medium">Total Amount</p>
+                  <p className="text-5xl font-black text-slate-900">
+                    {amount > 0 ? amount.toFixed(0) : '0'}
+                  </p>
+                  <p className="text-lg text-slate-500 mt-1">PKR</p>
+                </div>
+              </div>
+
+              {/* Service Type */}
+              <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Service Type</span>
+                <span className="text-slate-900 font-bold uppercase">{category}</span>
+              </div>
+
+              {/* Status */}
+              <div className="flex justify-between items-center py-3 mb-6">
+                <span className="text-slate-500 font-medium">Status</span>
+                <span className={`font-bold ${amount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                  {amount > 0 ? 'Ready' : 'Select Amount'}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={amount <= 0 || isProcessing}
+                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="spinner w-5 h-5 border-2 border-white/30 border-t-white"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      PLACE ORDER
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleClear}
+                  className="btn-secondary w-full py-3 text-base"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel - Price Selection */}
+          <div className="lg:col-span-2 space-y-6 order-1 lg:order-2">
+            
+            {/* Quick Prices */}
+            <div className="card p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Selection</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {prices.map((price) => (
                   <button
                     key={price}
                     onClick={() => handlePriceSelect(price)}
-                    className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
-                      selectedPrice === price
-                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
+                    className={`price-card p-6 text-center ${selectedPrice === price ? 'selected' : ''}`}
                   >
-                    <span className={`text-2xl md:text-3xl font-bold ${
-                      selectedPrice === price ? 'text-blue-600' : 'text-slate-900'
-                    }`}>
-                      {price}
-                    </span>
-                    {selectedPrice === price && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    )}
+                    <span className="text-3xl font-black text-slate-900">{price}</span>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Products */}
             {products.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Available Services</h2>
-                <div className="space-y-2">
+              <div className="card p-6">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Services</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {products.map((product) => (
                     <button
                       key={product._id}
                       onClick={() => handlePriceSelect(product.price)}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
-                        selectedPrice === product.price
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 hover:border-slate-300'
-                      }`}
+                      className={`price-card p-5 text-left ${selectedPrice === product.price ? 'selected' : ''}`}
                     >
-                      <div className="text-left">
-                        <p className="font-medium text-slate-900">{product.name}</p>
-                        {product.description && (
-                          <p className="text-sm text-slate-500">{product.description}</p>
-                        )}
-                      </div>
-                      <span className="text-xl font-bold text-slate-900">{product.price}</span>
+                      <h3 className="font-bold text-slate-900 mb-1 truncate">{product.name}</h3>
+                      <p className="text-2xl font-black text-slate-700">{product.price}</p>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Custom Amount</h2>
+            {/* Custom Amount */}
+            <div className="card p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Custom Amount</h2>
               <input
                 type="number"
                 value={customAmount}
                 onChange={(e) => handleCustomAmountChange(e.target.value)}
-                placeholder="0.00"
-                className="w-full px-6 py-6 text-3xl font-bold border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+                placeholder="Enter amount..."
+                className="w-full px-5 py-4 text-2xl font-bold rounded-xl"
               />
             </div>
-          </div>
 
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 sticky top-8">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Order Summary</h2>
-              
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-slate-600">
-                  <span>Service Type</span>
-                  <span className="font-medium text-slate-900 capitalize">{category}</span>
-                </div>
-                <div className="border-t border-dashed border-slate-200 pt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-slate-900">Total</span>
-                    <span className="text-3xl font-bold text-slate-900">PKR {amount.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handlePlaceOrder}
-                disabled={amount <= 0 || isProcessing}
-                className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 ${
-                  amount > 0 && !isProcessing
-                    ? 'bg-slate-900 hover:bg-slate-800 active:scale-[0.98]'
-                    : 'bg-slate-300 cursor-not-allowed'
-                }`}
-              >
-                {isProcessing ? (
-                  <>
-                    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    Place Order
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         </div>
       </div>

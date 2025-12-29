@@ -15,25 +15,34 @@ export async function POST(request: NextRequest) {
     // Get and increment token number from settings
     let settings = await Settings.findOne();
     if (!settings) {
-      settings = new Settings();
+      console.log('Creating new settings document');
+      settings = new Settings({ currentTokenNumber: 0 });
+      await settings.save();
     }
 
-    const tokenNumber = settings.currentTokenNumber + 1;
+    // Ensure currentTokenNumber is a valid number
+    const currentToken = typeof settings.currentTokenNumber === 'number' && !isNaN(settings.currentTokenNumber) 
+      ? settings.currentTokenNumber 
+      : 0;
+    const tokenNumber = currentToken + 1;
+    
+    console.log(`Current token: ${currentToken}, New token: ${tokenNumber}`);
+    
     settings.currentTokenNumber = tokenNumber;
     await settings.save();
 
     const order = new Order({ 
       tokenNumber,
       category, 
-      amount,
+      amount: Number(amount),
       customerEmail: customerEmail || '',
     });
     await order.save();
 
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Order creation error:', error);
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
   }
 }
 

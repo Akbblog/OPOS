@@ -36,40 +36,73 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center mb-8">Admin Login</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter email"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter password"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tight">
+            OPOS Admin
+          </h1>
+          <p className="text-slate-500 text-lg font-medium">
+            Service Center Management
+          </p>
+        </div>
+
+        <div className="card p-8">
+          <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
+            Sign In
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="admin@example.com"
+                className="w-full px-4 py-3 rounded-xl text-lg"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl text-lg"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 mt-6"
+            >
+              {loading ? (
+                <>
+                  <div className="spinner w-5 h-5 border-2 border-white/30 border-t-white"></div>
+                  Signing In...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+        </div>
+
+        <div className="text-center mt-6">
+          <a href="/" className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors">
+            ← Back to Home
+          </a>
+        </div>
       </div>
     </div>
   );

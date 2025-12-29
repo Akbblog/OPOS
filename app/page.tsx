@@ -1,62 +1,65 @@
+'use client';
+
 import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4 md:p-8" suppressHydrationWarning={true}>
-      <div className="max-w-5xl w-full">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 tracking-tight mb-3">OPOS</h1>
-          <p className="text-slate-500 text-lg">Point of Sale System</p>
+    <div className="min-h-screen bg-slate-100 p-6 md:p-12" suppressHydrationWarning={true}>
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-4 tracking-tight">
+            Service Center
+          </h1>
+          <p className="text-xl md:text-2xl text-slate-500 font-medium">
+            Select your service type to continue
+          </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+
+        {/* Service Selection Cards */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+          {/* Bike Service */}
           <Link href="/service/bike" className="group">
-            <div className="relative bg-white rounded-2xl p-8 md:p-12 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 hover:border-blue-500 overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-100 transition-colors" />
-              <div className="relative">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors">
-                  <svg className="w-8 h-8 text-blue-600 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="5" cy="17" r="3" />
-                    <circle cx="19" cy="17" r="3" />
-                    <path d="M12 17V5l-4 4" />
-                    <path d="M5 17l7-5 7 5" />
-                  </svg>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">BIKE</h2>
-                <p className="text-slate-500">Bicycle repairs and maintenance services</p>
+            <div className="card p-10 md:p-14 text-center hover:border-slate-300 transition-all duration-300 hover:-translate-y-1">
+              <div className="w-24 h-24 mx-auto mb-8 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <svg className="w-14 h-14 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="5.5" cy="17.5" r="3.5" />
+                  <circle cx="18.5" cy="17.5" r="3.5" />
+                  <path d="M15 6h-1.5l-3 5.5H7l-1.5 2.5" />
+                  <path d="M12 17.5l3-6h3l1.5 6" />
+                </svg>
               </div>
+              <h2 className="text-4xl font-bold text-slate-900 mb-3">BIKE</h2>
+              <p className="text-lg text-slate-500">Motorcycle services</p>
             </div>
           </Link>
-          
+
+          {/* Car Service */}
           <Link href="/service/car" className="group">
-            <div className="relative bg-white rounded-2xl p-8 md:p-12 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 hover:border-emerald-500 overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-100 transition-colors" />
-              <div className="relative">
-                <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-500 transition-colors">
-                  <svg className="w-8 h-8 text-emerald-600 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" />
-                    <circle cx="6.5" cy="16.5" r="2.5" />
-                    <circle cx="16.5" cy="16.5" r="2.5" />
-                  </svg>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">CAR</h2>
-                <p className="text-slate-500">Automobile repairs and maintenance services</p>
+            <div className="card p-10 md:p-14 text-center hover:border-slate-300 transition-all duration-300 hover:-translate-y-1">
+              <div className="w-24 h-24 mx-auto mb-8 bg-emerald-50 rounded-2xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                <svg className="w-14 h-14 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M7 17a2 2 0 100-4 2 2 0 000 4zM17 17a2 2 0 100-4 2 2 0 000 4z" />
+                  <path d="M5 17H3v-4.5a.5.5 0 01.5-.5h1l1.5-3.5a1 1 0 01.9-.5h10.2a1 1 0 01.9.5l1.5 3.5h1a.5.5 0 01.5.5V17h-2" />
+                  <path d="M9 17h6" />
+                </svg>
               </div>
+              <h2 className="text-4xl font-bold text-slate-900 mb-3">CAR</h2>
+              <p className="text-lg text-slate-500">Automobile services</p>
             </div>
           </Link>
         </div>
-        
-        <div className="flex justify-center">
+
+        {/* Admin Link */}
+        <div className="text-center">
           <Link 
             href="/login" 
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-colors text-sm font-medium"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-              <polyline points="10 17 15 12 10 7" />
-              <line x1="15" y1="12" x2="3" y2="12" />
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
             </svg>
-            Admin Dashboard
+            Admin Access
           </Link>
         </div>
       </div>
