@@ -1,0 +1,648 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import Link from 'next/link';
+
+interface Order {
+  _id: string;
+  tokenNumber?: number;
+  category: string;
+  amount: number;
+  timestamp: string;
+}
+
+interface Settings {
+  bikePrices: number[];
+  carPrices: number[];
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  category: string;
+  price: number;
+  description: string;
+  isActive: boolean;
+}
+
+interface Notification {
+  _id: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+type TabType = 'overview' | 'products' | 'orders' | 'settings' | 'notifications';
+
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bikePrices, setBikePrices] = useState('');
+  const [carPrices, setCarPrices] = useState('');
+  
+  // Product form state
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    category: 'bike',
+    price: '',
+    description: '',
+  });
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+    fetchData();
+  }, [session, status, router]);
+
+  const fetchData = async () => {
+    await Promise.all([
+      fetchOrders(),
+      fetchSettings(),
+      fetchProducts(),
+      fetchNotifications(),
+    ]);
+    setLoading(false);
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      setOrders(data);
+    } catch (error) {
+      console.error('Failed to fetch orders');
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      setSettings(data);
+      setBikePrices(data.bikePrices.join(', '));
+      setCarPrices(data.carPrices.join(', '));
+    } catch (error) {
+      toast.error('Failed to load settings');
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Failed to fetch products');
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications');
+      const data = await res.json();
+      setNotifications(data);
+    } catch (error) {
+      console.error('Failed to fetch notifications');
+    }
+  };
+
+  const handleUpdateSettings = async () => {
+    try {
+      const bikePricesArray = bikePrices.split(',').map(p => parseFloat(p.trim())).filter(p => !isNaN(p));
+      const carPricesArray = carPrices.split(',').map(p => parseFloat(p.trim())).filter(p => !isNaN(p));
+
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bikePrices: bikePricesArray, carPrices: carPricesArray }),
+      });
+
+      if (res.ok) {
+        toast.success('Settings updated successfully');
+        fetchSettings();
+      } else {
+        toast.error('Failed to update settings');
+      }
+    } catch (error) {
+      toast.error('Error updating settings');
+    }
+  };
+
+  const handleSaveProduct = async () => {
+    try {
+      const method = editingProduct ? 'PUT' : 'POST';
+      const url = editingProduct ? `/api/products/${editingProduct._id}` : '/api/products';
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...productForm,
+          price: parseFloat(productForm.price),
+        }),
+      });
+
+      if (res.ok) {
+        toast.success(editingProduct ? 'Product updated' : 'Product created');
+        setShowProductForm(false);
+        setEditingProduct(null);
+        setProductForm({ name: '', category: 'bike', price: '', description: '' });
+        fetchProducts();
+      } else {
+        toast.error('Failed to save product');
+      }
+    } catch (error) {
+      toast.error('Error saving product');
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Product deleted');
+        fetchProducts();
+      } else {
+        toast.error('Failed to delete product');
+      }
+    } catch (error) {
+      toast.error('Error deleting product');
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push('/');
+  };
+
+  const markNotificationsRead = async () => {
+    await fetch('/api/notifications', { method: 'PUT' });
+    fetchNotifications();
+  };
+
+  // Analytics calculations
+  const totalSales = orders.reduce((sum, order) => sum + order.amount, 0);
+  const bikeOrders = orders.filter(o => o.category === 'bike');
+  const carOrders = orders.filter(o => o.category === 'car');
+  const bikeSales = bikeOrders.reduce((sum, o) => sum + o.amount, 0);
+  const carSales = carOrders.reduce((sum, o) => sum + o.amount, 0);
+
+  const dailySales = orders.reduce((acc, order) => {
+    const date = new Date(order.timestamp).toLocaleDateString();
+    acc[date] = (acc[date] || 0) + order.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const chartData = Object.entries(dailySales)
+    .slice(-7)
+    .map(([date, amount]) => ({ date, amount }));
+
+  const pieData = [
+    { name: 'Bike', value: bikeSales, color: '#3b82f6' },
+    { name: 'Car', value: carSales, color: '#10b981' },
+  ];
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-pulse flex items-center gap-3">
+          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" />
+          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+          <div className="w-3 h-3 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white p-6 hidden lg:block">
+        <div className="mb-10">
+          <h1 className="text-2xl font-bold tracking-tight">OPOS</h1>
+          <p className="text-slate-400 text-sm">Admin Dashboard</p>
+        </div>
+        
+        <nav className="space-y-2">
+          {[
+            { id: 'overview', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+            { id: 'products', label: 'Products', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+            { id: 'orders', label: 'Orders', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+            { id: 'notifications', label: 'Notifications', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
+            { id: 'settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as TabType)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                activeTab === item.id
+                  ? 'bg-white/10 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+              </svg>
+              {item.label}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+        
+        <div className="absolute bottom-6 left-6 right-6">
+          <Link href="/" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Back to POS
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile Header */}
+      <header className="lg:hidden bg-slate-900 text-white p-4 sticky top-0 z-40">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">OPOS Admin</h1>
+          <button onClick={handleLogout} className="text-red-400">Logout</button>
+        </div>
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+          {['overview', 'products', 'orders', 'notifications', 'settings'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as TabType)}
+              className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm ${
+                activeTab === tab ? 'bg-white text-slate-900' : 'bg-slate-800 text-slate-300'
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="lg:ml-64 p-4 md:p-8">
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p className="text-slate-500 text-sm mb-1">Total Sales</p>
+                <p className="text-3xl font-bold text-slate-900">${totalSales.toFixed(2)}</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p className="text-slate-500 text-sm mb-1">Total Orders</p>
+                <p className="text-3xl font-bold text-slate-900">{orders.length}</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p className="text-slate-500 text-sm mb-1">Bike Sales</p>
+                <p className="text-3xl font-bold text-blue-600">${bikeSales.toFixed(2)}</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <p className="text-slate-500 text-sm mb-1">Car Sales</p>
+                <p className="text-3xl font-bold text-emerald-600">${carSales.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Sales Trend (Last 7 Days)</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#64748b" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#64748b" />
+                    <Tooltip />
+                    <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Sales by Category</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex justify-center gap-6 mt-4">
+                  {pieData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm text-slate-600">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'products' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-900">Products</h2>
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setProductForm({ name: '', category: 'bike', price: '', description: '' });
+                  setShowProductForm(true);
+                }}
+                className="bg-slate-900 text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Product
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {products.map((product) => (
+                <div key={product._id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">{product.name}</h3>
+                      <p className="text-sm text-slate-500 capitalize">{product.category}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {product.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 mb-2">${product.price}</p>
+                  {product.description && (
+                    <p className="text-sm text-slate-500 mb-4">{product.description}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingProduct(product);
+                        setProductForm({
+                          name: product.name,
+                          category: product.category,
+                          price: product.price.toString(),
+                          description: product.description,
+                        });
+                        setShowProductForm(true);
+                      }}
+                      className="flex-1 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product._id)}
+                      className="flex-1 py-2 border border-red-200 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {showProductForm && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                  <h3 className="text-xl font-bold mb-4">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={productForm.name}
+                        onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                      <select
+                        value={productForm.category}
+                        onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="bike">Bike</option>
+                        <option value="car">Car</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Price</label>
+                      <input
+                        type="number"
+                        value={productForm.price}
+                        onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                      <textarea
+                        value={productForm.description}
+                        onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                        className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={handleSaveProduct}
+                      className="flex-1 bg-slate-900 text-white py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setShowProductForm(false)}
+                      className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl hover:bg-slate-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'orders' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-slate-900">Orders</h2>
+            
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Token</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Order ID</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Category</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Amount</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Date</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order) => (
+                      <tr key={order._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center justify-center w-12 h-12 bg-slate-900 text-white font-bold rounded-lg">
+                            {order.tokenNumber ? String(order.tokenNumber).padStart(3, '0') : '-'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 font-mono text-sm">#{order._id.slice(-8).toUpperCase()}</td>
+                        <td className="py-4 px-6">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            order.category === 'bike' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {order.category.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 font-semibold">${order.amount.toFixed(2)}</td>
+                        <td className="py-4 px-6 text-slate-600">{new Date(order.timestamp).toLocaleDateString()}</td>
+                        <td className="py-4 px-6 text-slate-600">{new Date(order.timestamp).toLocaleTimeString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-900">Notifications</h2>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markNotificationsRead}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {notifications.length === 0 ? (
+                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                  <p className="text-slate-500">No notifications yet</p>
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`bg-white rounded-2xl p-4 border ${notification.isRead ? 'border-slate-200' : 'border-blue-200 bg-blue-50/30'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
+                        notification.type === 'success' ? 'bg-green-500' :
+                        notification.type === 'warning' ? 'bg-yellow-500' :
+                        notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                      }`} />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900">{notification.title}</h3>
+                        <p className="text-slate-600 text-sm">{notification.message}</p>
+                        <p className="text-slate-400 text-xs mt-1">{new Date(notification.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-slate-900">Settings</h2>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Quick Select Prices</h3>
+              <p className="text-slate-500 text-sm mb-6">Configure the predefined price options shown on the POS screen</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Bike Service Prices</label>
+                  <input
+                    type="text"
+                    value={bikePrices}
+                    onChange={(e) => setBikePrices(e.target.value)}
+                    placeholder="100, 150, 200"
+                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Enter prices separated by commas</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Car Service Prices</label>
+                  <input
+                    type="text"
+                    value={carPrices}
+                    onChange={(e) => setCarPrices(e.target.value)}
+                    placeholder="100, 150, 200"
+                    className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Enter prices separated by commas</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleUpdateSettings}
+                className="mt-6 bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800 transition-colors"
+              >
+                Save Settings
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

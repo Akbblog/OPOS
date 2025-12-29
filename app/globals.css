@@ -24,3 +24,43 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  .print-modal {
+    position: static;
+    background: white;
+    box-shadow: none;
+    margin: 0;
+    padding: 10px;
+    width: 80mm;
+    max-width: 80mm;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .print-modal h1 {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+  .print-modal h2 {
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+  .print-modal p {
+    margin-bottom: 3px;
+  }
+  .print-modal .space-y-3 > * + * {
+    margin-top: 3px;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-modal,
+  .print-modal * {
+    visibility: visible;
+  }
+  .print-modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
