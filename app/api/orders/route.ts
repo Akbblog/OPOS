@@ -20,7 +20,14 @@ export async function POST(request: NextRequest) {
       timestamp: { $gte: today }
     }).sort({ tokenNumber: -1 });
 
-    const tokenNumber = lastOrder ? lastOrder.tokenNumber + 1 : 1;
+    // Ensure tokenNumber is a valid number, fallback to 1 if not
+    const lastTokenNumber = lastOrder?.tokenNumber && !isNaN(lastOrder.tokenNumber) ? lastOrder.tokenNumber : 0;
+    const tokenNumber = lastTokenNumber + 1;
+
+    // Validate tokenNumber is a valid number
+    if (isNaN(tokenNumber) || tokenNumber <= 0) {
+      return NextResponse.json({ error: 'Invalid token number generated' }, { status: 500 });
+    }
 
     const order = new Order({ 
       tokenNumber,
