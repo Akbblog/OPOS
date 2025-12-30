@@ -11,6 +11,7 @@ interface Order {
   amount: number;
   timestamp: string;
   customerEmail?: string;
+  vehicleNo?: string;
 }
 
 export default function ReceiptPage() {

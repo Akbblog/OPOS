@@ -15,6 +15,7 @@ interface Order {
   category: string;
   amount: number;
   timestamp: string;
+  vehicleNo?: string;
 }
 
 interface Settings {
@@ -677,6 +678,7 @@ export default function AdminPage() {
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Order ID</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Category</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Amount</th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Vehicle No</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Date</th>
                       <th className="text-left py-4 px-6 text-sm font-semibold text-slate-600">Time</th>
                     </tr>
@@ -698,6 +700,7 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td className="py-4 px-6 font-semibold">{order.amount.toFixed(2)}</td>
+                        <td className="py-4 px-6 text-slate-600">{order.vehicleNo || '-'}</td>
                         <td className="py-4 px-6 text-slate-600">{new Date(order.timestamp).toLocaleDateString()}</td>
                         <td className="py-4 px-6 text-slate-600">{new Date(order.timestamp).toLocaleTimeString()}</td>
                       </tr>
