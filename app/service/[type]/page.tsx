@@ -160,72 +160,75 @@ export default function ServicePage() {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto p-4">
-        <div className="grid lg:grid-cols-4 gap-4">
+        <div className="space-y-4">
           
-          {/* Left Panel - Order Summary */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="summary-panel p-4">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
-              
-              {/* Selected Amount Display */}
-              <div className="bg-slate-50 rounded-lg p-4 mb-4">
-                <div className="text-center">
-                  <p className="text-sm text-slate-500 mb-1 uppercase tracking-wide font-medium">Total Amount</p>
-                  <p className="text-4xl font-black text-slate-900">
-                    {amount > 0 ? amount.toFixed(0) : '0'}
-                  </p>
-                  <p className="text-sm text-slate-500 mt-1">PKR</p>
+          {/* Order Summary - Moved to top */}
+          <div className="summary-panel p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <div className="lg:col-span-1">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
+                
+                {/* Selected Amount Display */}
+                <div className="bg-slate-50 rounded-lg p-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-sm text-slate-500 mb-1 uppercase tracking-wide font-medium">Total Amount</p>
+                    <p className="text-4xl font-black text-slate-900">
+                      {amount > 0 ? amount.toFixed(0) : '0'}
+                    </p>
+                    <p className="text-sm text-slate-500 mt-1">PKR</p>
+                  </div>
+                </div>
+
+                {/* Service Type */}
+                <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                  <span className="text-slate-500 text-sm font-medium">Service Type</span>
+                  <span className="text-slate-900 font-bold uppercase text-sm">{category}</span>
+                </div>
+
+                {/* Status */}
+                <div className="flex justify-between items-center py-2 mb-4">
+                  <span className="text-slate-500 text-sm font-medium">Status</span>
+                  <span className={`font-bold text-sm ${amount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                    {amount > 0 ? 'Ready' : 'Select Amount'}
+                  </span>
                 </div>
               </div>
 
-              {/* Service Type */}
-              <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                <span className="text-slate-500 text-sm font-medium">Service Type</span>
-                <span className="text-slate-900 font-bold uppercase text-sm">{category}</span>
-              </div>
-
-              {/* Status */}
-              <div className="flex justify-between items-center py-2 mb-4">
-                <span className="text-slate-500 text-sm font-medium">Status</span>
-                <span className={`font-bold text-sm ${amount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
-                  {amount > 0 ? 'Ready' : 'Select Amount'}
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-2">
-                <button
-                  onClick={handlePlaceOrder}
-                  disabled={amount <= 0 || isProcessing}
-                  className="btn-primary w-full py-3 text-base flex items-center justify-center gap-2"
-                >
-                  {isProcessing ? (
-                    <>
-                      <div className="spinner w-5 h-5 border-2 border-white/30 border-t-white"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      PLACE ORDER
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={handleClear}
-                  className="btn-secondary w-full py-2 text-sm"
-                >
-                  Clear
-                </button>
+              {/* Action Buttons - Moved to right */}
+              <div className="lg:col-span-3 flex items-end justify-end">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleClear}
+                    className="btn-secondary px-6 py-3 text-sm"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={amount <= 0 || isProcessing}
+                    className="btn-primary px-8 py-3 text-base flex items-center justify-center gap-2"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div className="spinner w-5 h-5 border-2 border-white/30 border-t-white"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        PLACE ORDER
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right Panel - Price Selection */}
-          <div className="lg:col-span-3 space-y-4 order-1 lg:order-2">
+          {/* Price Selection */}
+          <div className="space-y-4">
             
             {/* Quick Prices */}
             <div className="card p-4">
@@ -262,28 +265,29 @@ export default function ServicePage() {
               </div>
             )}
 
-            {/* Custom Amount */}
-            <div className="card p-4">
-              <h2 className="text-base font-bold text-slate-900 mb-3">Custom Amount</h2>
-              <input
-                type="number"
-                value={customAmount}
-                onChange={(e) => handleCustomAmountChange(e.target.value)}
-                placeholder="Enter amount..."
-                className="w-full px-4 py-3 text-xl font-bold rounded-lg"
-              />
-            </div>
+            {/* Custom Amount and Vehicle Number - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="card p-4">
+                <h2 className="text-base font-bold text-slate-900 mb-3">Custom Amount</h2>
+                <input
+                  type="number"
+                  value={customAmount}
+                  onChange={(e) => handleCustomAmountChange(e.target.value)}
+                  placeholder="Enter amount..."
+                  className="w-full px-4 py-3 text-xl font-bold rounded-lg"
+                />
+              </div>
 
-            {/* Vehicle Number */}
-            <div className="card p-4">
-              <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number (Optional)</h2>
-              <input
-                type="text"
-                value={vehicleNo}
-                onChange={(e) => setVehicleNo(e.target.value)}
-                placeholder="Enter vehicle number..."
-                className="w-full px-4 py-3 text-lg font-medium rounded-lg"
-              />
+              <div className="card p-4">
+                <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number (Optional)</h2>
+                <input
+                  type="text"
+                  value={vehicleNo}
+                  onChange={(e) => setVehicleNo(e.target.value)}
+                  placeholder="Enter vehicle number..."
+                  className="w-full px-4 py-3 text-lg font-medium rounded-lg"
+                />
+              </div>
             </div>
 
           </div>
