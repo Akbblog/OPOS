@@ -13,11 +13,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Get and increment token number from settings
+    console.log('Looking for existing settings...');
     let settings = await Settings.findOne();
+    console.log('Found settings:', settings);
+    
     if (!settings) {
       console.log('Creating new settings document');
-      settings = new Settings({ currentTokenNumber: 0 });
+      settings = new Settings({ 
+        bikePrices: [100, 150, 200],
+        carPrices: [100, 150, 200],
+        currentTokenNumber: 0 
+      });
       await settings.save();
+      console.log('New settings created:', settings);
     }
 
     // Ensure currentTokenNumber is a valid number
@@ -29,7 +37,8 @@ export async function POST(request: NextRequest) {
     console.log(`Current token: ${currentToken}, New token: ${tokenNumber}`);
     
     settings.currentTokenNumber = tokenNumber;
-    await settings.save();
+    const savedSettings = await settings.save();
+    console.log('Settings saved:', savedSettings);
 
     const order = new Order({ 
       tokenNumber,

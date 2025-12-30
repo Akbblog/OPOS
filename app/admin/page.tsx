@@ -53,6 +53,7 @@ export default function AdminPage() {
   const [bikePrices, setBikePrices] = useState('');
   const [carPrices, setCarPrices] = useState('');
   const [resettingTokens, setResettingTokens] = useState(false);
+  const [fixingTokens, setFixingTokens] = useState(false);
   
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false);
@@ -130,6 +131,30 @@ export default function AdminPage() {
       toast.error('Failed to reset token counter');
     } finally {
       setResettingTokens(false);
+    }
+  };
+
+  const handleTokenFix = async () => {
+    setFixingTokens(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fixTokens: true }),
+      });
+
+      if (res.ok) {
+        const updatedSettings = await res.json();
+        setSettings(updatedSettings);
+        toast.success('Token counter fixed successfully');
+      } else {
+        toast.error('Failed to fix token counter');
+      }
+    } catch (error) {
+      console.error('Error fixing tokens:', error);
+      toast.error('Failed to fix token counter');
+    } finally {
+      setFixingTokens(false);
     }
   };
 
@@ -768,7 +793,18 @@ export default function AdminPage() {
                     <h4 className="font-medium text-slate-900">Current Token Number</h4>
                     <p className="text-sm text-slate-500">Next order will receive token #{settings?.currentTokenNumber ? settings.currentTokenNumber + 1 : 1}</p>
                   </div>
-                  <span className="text-2xl font-bold text-blue-600">#{settings?.currentTokenNumber || 0}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-blue-600">#{settings?.currentTokenNumber || 0}</span>
+                    <button
+                      onClick={fetchSettings}
+                      className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                      title="Refresh settings"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
@@ -782,6 +818,20 @@ export default function AdminPage() {
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
                     {resettingTokens ? 'Resetting...' : 'Reset Tokens'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border border-blue-200 bg-blue-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-blue-900">Fix Token Counter</h4>
+                    <p className="text-sm text-blue-600">If token counter is broken or showing wrong values, this will fix it.</p>
+                  </div>
+                  <button
+                    onClick={handleTokenFix}
+                    disabled={fixingTokens}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    {fixingTokens ? 'Fixing...' : 'Fix Tokens'}
                   </button>
                 </div>
               </div>
