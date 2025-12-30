@@ -6,7 +6,7 @@ import Settings from '@/lib/models/Settings';
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    const { category, amount, customerEmail } = await request.json();
+    const { category, amount, customerEmail, vehicleNo } = await request.json();
 
     if (!category || !amount || amount <= 0) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       category, 
       amount: Number(amount),
       customerEmail: customerEmail || '',
+      vehicleNo: vehicleNo || '',
     });
     await order.save();
 

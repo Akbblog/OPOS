@@ -22,7 +22,7 @@ interface Product {
 export default function ServicePage() {
   const params = useParams();
   const router = useRouter();
-  const { category, amount, setCategory, setAmount } = useOrderStore();
+  const { category, amount, vehicleNo, setCategory, setAmount, setVehicleNo } = useOrderStore();
   const [customAmount, setCustomAmount] = useState('');
   const [settings, setSettings] = useState<Settings | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -108,7 +108,7 @@ export default function ServicePage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, amount }),
+        body: JSON.stringify({ category, amount, vehicleNo }),
       });
 
       if (res.ok) {
@@ -271,6 +271,18 @@ export default function ServicePage() {
                 onChange={(e) => handleCustomAmountChange(e.target.value)}
                 placeholder="Enter amount..."
                 className="w-full px-5 py-4 text-2xl font-bold rounded-xl"
+              />
+            </div>
+
+            {/* Vehicle Number */}
+            <div className="card p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Vehicle Number (Optional)</h2>
+              <input
+                type="text"
+                value={vehicleNo}
+                onChange={(e) => setVehicleNo(e.target.value)}
+                placeholder="Enter vehicle number..."
+                className="w-full px-5 py-4 text-xl font-medium rounded-xl"
               />
             </div>
 

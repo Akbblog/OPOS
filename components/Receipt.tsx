@@ -9,6 +9,7 @@ interface ReceiptData {
   category: string;
   amount: number;
   timestamp: string;
+  vehicleNo?: string;
   items?: { name: string; price: number }[];
 }
 
@@ -78,6 +79,10 @@ export function generateReceiptHTML(order: ReceiptData): string {
             <span>Service:</span>
             <span>${order.category.charAt(0).toUpperCase() + order.category.slice(1)} Service</span>
           </div>
+          ${order.vehicleNo ? `<div class="receipt-row">
+            <span>Vehicle No:</span>
+            <span>${order.vehicleNo}</span>
+          </div>` : ''}
           <div class="receipt-row total">
             <span>TOTAL:</span>
             <span>{order.amount.toFixed(2)}</span>

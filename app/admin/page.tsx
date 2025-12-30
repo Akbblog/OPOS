@@ -6,6 +6,8 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import * as csvWriter from 'csv-writer';
 
 interface Order {
   _id: string;
@@ -39,7 +41,19 @@ interface Notification {
   createdAt: string;
 }
 
-type TabType = 'overview' | 'products' | 'orders' | 'prices' | 'notifications' | 'settings';
+interface ReportData {
+  totalRevenue: number;
+  totalOrders: number;
+  bikeRevenue: number;
+  carRevenue: number;
+  bikeOrders: number;
+  carOrders: number;
+  date?: string;
+  period?: string;
+  month?: string;
+}
+
+type TabType = 'overview' | 'products' | 'orders' | 'reports' | 'prices' | 'notifications' | 'settings';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -49,6 +63,9 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [dailyReport, setDailyReport] = useState<ReportData | null>(null);
+  const [weeklyReport, setWeeklyReport] = useState<ReportData | null>(null);
+  const [monthlyReport, setMonthlyReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [bikePrices, setBikePrices] = useState('');
   const [carPrices, setCarPrices] = useState('');
@@ -80,6 +97,7 @@ export default function AdminPage() {
       fetchSettings(),
       fetchProducts(),
       fetchNotifications(),
+      fetchReports(),
     ]);
     setLoading(false);
   };
@@ -201,6 +219,59 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
       setNotifications([]);
+    }
+  };
+
+  const fetchReports = async () => {
+    try {
+      const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
+        fetch('/api/reports/daily'),
+        fetch('/api/reports/weekly'),
+        fetch('/api/reports/monthly')
+      ]);
+
+      if (dailyRes.ok) {
+        const dailyData = await dailyRes.json();
+        setDailyReport(dailyData);
+      }
+      if (weeklyRes.ok) {
+        const weeklyData = await weeklyRes.json();
+        setWeeklyReport(weeklyData);
+      }
+      if (monthlyRes.ok) {
+        const monthlyData = await monthlyRes.json();
+        setMonthlyReport(monthlyData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch reports:', error);
+    }
+  };
+
+  const downloadReport = async (type: 'daily' | 'weekly' | 'monthly', data: ReportData) => {
+    try {
+      // Generate PDF
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Report`, 20, 30);
+      
+      doc.setFontSize(12);
+      doc.text(`Period: ${data.date || data.period || data.month}`, 20, 50);
+      
+      doc.text(`Total Revenue: PKR ${data.totalRevenue.toFixed(2)}`, 20, 70);
+      doc.text(`Total Orders: ${data.totalOrders}`, 20, 85);
+      
+      doc.text(`Bike Revenue: PKR ${data.bikeRevenue.toFixed(2)} (${data.bikeOrders} orders)`, 20, 105);
+      doc.text(`Car Revenue: PKR ${data.carRevenue.toFixed(2)} (${data.carOrders} orders)`, 20, 120);
+      
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 150);
+      
+      doc.save(`${type}-report-${Date.now()}.pdf`);
+      
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download report');
     }
   };
 
@@ -382,7 +453,7 @@ export default function AdminPage() {
           <button onClick={handleLogout} className="text-red-400">Logout</button>
         </div>
         <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-          {['overview', 'products', 'orders', 'prices', 'notifications', 'settings'].map((tab) => (
+          {['overview', 'products', 'orders', 'reports', 'prices', 'notifications', 'settings'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as TabType)}
@@ -678,6 +749,136 @@ export default function AdminPage() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-900">Reports</h2>
+              <button
+                onClick={fetchReports}
+                className="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh Reports
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Daily Report */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Daily Report</h3>
+                {dailyReport ? (
+                  <div className="space-y-3">
+                    <div className="text-sm text-slate-500">{dailyReport.date}</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">{dailyReport.totalRevenue.toFixed(2)}</p>
+                        <p className="text-sm text-slate-500">Revenue</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">{dailyReport.totalOrders}</p>
+                        <p className="text-sm text-slate-500">Orders</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-slate-100">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-600">Bike: {dailyReport.bikeRevenue.toFixed(2)} ({dailyReport.bikeOrders})</span>
+                        <span className="text-emerald-600">Car: {dailyReport.carRevenue.toFixed(2)} ({dailyReport.carOrders})</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => downloadReport('daily', dailyReport)}
+                      className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Download PDF
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="spinner w-6 h-6 mx-auto mb-2"></div>
+                    <p className="text-slate-500">Loading...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Weekly Report */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Weekly Report</h3>
+                {weeklyReport ? (
+                  <div className="space-y-3">
+                    <div className="text-sm text-slate-500">{weeklyReport.period}</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">{weeklyReport.totalRevenue.toFixed(2)}</p>
+                        <p className="text-sm text-slate-500">Revenue</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">{weeklyReport.totalOrders}</p>
+                        <p className="text-sm text-slate-500">Orders</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-slate-100">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-600">Bike: {weeklyReport.bikeRevenue.toFixed(2)} ({weeklyReport.bikeOrders})</span>
+                        <span className="text-emerald-600">Car: {weeklyReport.carRevenue.toFixed(2)} ({weeklyReport.carOrders})</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => downloadReport('weekly', weeklyReport)}
+                      className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Download PDF
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="spinner w-6 h-6 mx-auto mb-2"></div>
+                    <p className="text-slate-500">Loading...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Monthly Report */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Monthly Report</h3>
+                {monthlyReport ? (
+                  <div className="space-y-3">
+                    <div className="text-sm text-slate-500">{monthlyReport.month}</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">{monthlyReport.totalRevenue.toFixed(2)}</p>
+                        <p className="text-sm text-slate-500">Revenue</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">{monthlyReport.totalOrders}</p>
+                        <p className="text-sm text-slate-500">Orders</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-slate-100">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-600">Bike: {monthlyReport.bikeRevenue.toFixed(2)} ({monthlyReport.bikeOrders})</span>
+                        <span className="text-emerald-600">Car: {monthlyReport.carRevenue.toFixed(2)} ({monthlyReport.carOrders})</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => downloadReport('monthly', monthlyReport)}
+                      className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Download PDF
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="spinner w-6 h-6 mx-auto mb-2"></div>
+                    <p className="text-slate-500">Loading...</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

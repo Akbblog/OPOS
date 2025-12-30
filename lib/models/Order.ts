@@ -5,6 +5,7 @@ const OrderSchema = new mongoose.Schema({
   category: { type: String, required: true, enum: ['bike', 'car'] },
   amount: { type: Number, required: true },
   customerEmail: { type: String, default: '' },
+  vehicleNo: { type: String, default: '' },
   timestamp: { type: Date, default: Date.now },
 });
 
