@@ -42,20 +42,32 @@ export default function ServicePage() {
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/settings');
+      if (!res.ok) throw new Error('Failed to fetch settings');
       const data = await res.json();
-      setSettings(data);
+      if (data && typeof data === 'object' && data.bikePrices && data.carPrices) {
+        setSettings(data);
+      } else {
+        console.error('Invalid settings data:', data);
+      }
     } catch (error) {
-      console.error('Failed to fetch settings');
+      console.error('Failed to fetch settings:', error);
     }
   };
 
   const fetchProducts = async () => {
     try {
       const res = await fetch(`/api/products?category=${type}&active=true`);
+      if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
-      setProducts(data);
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        console.error('Invalid products data:', data);
+        setProducts([]);
+      }
     } catch (error) {
-      console.error('Failed to fetch products');
+      console.error('Failed to fetch products:', error);
+      setProducts([]);
     }
   };
 

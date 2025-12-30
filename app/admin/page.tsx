@@ -87,22 +87,34 @@ export default function AdminPage() {
   const fetchOrders = async () => {
     try {
       const res = await fetch('/api/orders');
+      if (!res.ok) throw new Error('Failed to fetch orders');
       const data = await res.json();
-      setOrders(data);
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        console.error('Invalid orders data:', data);
+        setOrders([]);
+      }
     } catch (error) {
-      console.error('Failed to fetch orders');
+      console.error('Failed to fetch orders:', error);
+      setOrders([]);
     }
   };
 
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/settings');
+      if (!res.ok) throw new Error('Failed to fetch settings');
       const data = await res.json();
-      setSettings(data);
-      setBikePrices(data.bikePrices.join(', '));
-      setCarPrices(data.carPrices.join(', '));
+      if (data && typeof data === 'object' && data.bikePrices && data.carPrices) {
+        setSettings(data);
+        setBikePrices(data.bikePrices.join(', '));
+        setCarPrices(data.carPrices.join(', '));
+      } else {
+        console.error('Invalid settings data:', data);
+      }
     } catch (error) {
-      console.error('Failed to fetch settings');
+      console.error('Failed to fetch settings:', error);
     }
   };
 
@@ -161,20 +173,34 @@ export default function AdminPage() {
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
+      if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
-      setProducts(data);
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        console.error('Invalid products data:', data);
+        setProducts([]);
+      }
     } catch (error) {
-      console.error('Failed to fetch products');
+      console.error('Failed to fetch products:', error);
+      setProducts([]);
     }
   };
 
   const fetchNotifications = async () => {
     try {
       const res = await fetch('/api/notifications');
+      if (!res.ok) throw new Error('Failed to fetch notifications');
       const data = await res.json();
-      setNotifications(data);
+      if (Array.isArray(data)) {
+        setNotifications(data);
+      } else {
+        console.error('Invalid notifications data:', data);
+        setNotifications([]);
+      }
     } catch (error) {
-      console.error('Failed to fetch notifications');
+      console.error('Failed to fetch notifications:', error);
+      setNotifications([]);
     }
   };
 
