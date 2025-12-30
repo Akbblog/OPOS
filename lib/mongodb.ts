@@ -20,6 +20,8 @@ async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      // Fail fast if the server(s) are unreachable
+      serverSelectionTimeoutMS: 5000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
@@ -31,7 +33,11 @@ async function dbConnect() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    throw e;
+    // Provide clearer guidance for common Atlas connection issues
+    // (invalid URI, network egress, IP access list / whitelist)
+    console.error('MongoDB connection error:', e);
+    const message = e instanceof Error ? e.message : String(e);
+    throw new Error(`${message} — check MONGODB_URI, network access, and Atlas IP access list: https://www.mongodb.com/docs/atlas/security-whitelist/`);
   }
 
   return cached.conn;
