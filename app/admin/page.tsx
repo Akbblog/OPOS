@@ -72,6 +72,7 @@ export default function AdminPage() {
   const [carPrices, setCarPrices] = useState('');
   const [resettingTokens, setResettingTokens] = useState(false);
   const [fixingTokens, setFixingTokens] = useState(false);
+  const [resettingSystem, setResettingSystem] = useState(false);
   
   // Product form state
   const [showProductForm, setShowProductForm] = useState(false);
@@ -186,6 +187,48 @@ export default function AdminPage() {
       toast.error('Failed to fix token counter');
     } finally {
       setFixingTokens(false);
+    }
+  };
+
+  const handleSystemReset = async () => {
+    const confirmMessage = `⚠️ DANGER: This will permanently delete ALL data including:\n\n• All orders and transaction history\n• All products and services\n• All notifications\n• Reset all settings to defaults\n• Reset token counter to 0\n\nThis action CANNOT be undone. Are you absolutely sure you want to reset the entire system?`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    // Double confirmation
+    if (!confirm('FINAL WARNING: This will erase everything. Type "RESET" to confirm:')) {
+      return;
+    }
+    
+    const confirmation = prompt('Type "RESET" to confirm system reset:');
+    if (confirmation !== 'RESET') {
+      toast.error('System reset cancelled');
+      return;
+    }
+
+    setResettingSystem(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemReset: true }),
+      });
+
+      if (res.ok) {
+        toast.success('System reset successfully. Reloading...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error('Failed to reset system');
+      }
+    } catch (error) {
+      console.error('Error resetting system:', error);
+      toast.error('Failed to reset system');
+    } finally {
+      setResettingSystem(false);
     }
   };
 
@@ -1071,8 +1114,62 @@ export default function AdminPage() {
               <h3 className="text-lg font-semibold text-slate-900 mb-4">System Configuration</h3>
               <p className="text-slate-500 text-sm mb-6">Additional system settings and configurations</p>
               
-              <div className="text-sm text-slate-500">
-                Settings panel - Additional configurations can be added here
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-slate-900">System Status</h4>
+                    <p className="text-sm text-slate-500">Current system health and version</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-700">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Online
+                    </span>
+                    <p className="text-xs text-slate-400 mt-1">OPOS v1.0.0</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-blue-900">Database Backup</h4>
+                    <p className="text-sm text-blue-600">Export all data for backup purposes</p>
+                  </div>
+                  <button
+                    onClick={() => toast('Backup feature coming soon')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Export Data
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-yellow-900">Maintenance Mode</h4>
+                    <p className="text-sm text-yellow-600">Temporarily disable order processing for maintenance</p>
+                  </div>
+                  <button
+                    onClick={() => toast('Maintenance mode feature coming soon')}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+                  >
+                    Enable
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-red-900">System Reset</h4>
+                    <p className="text-sm text-red-600">⚠️ Permanently delete ALL data and reset system to factory defaults</p>
+                  </div>
+                  <button
+                    onClick={handleSystemReset}
+                    disabled={resettingSystem}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    {resettingSystem ? 'Resetting...' : 'Reset System'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

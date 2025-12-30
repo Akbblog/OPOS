@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Settings from '@/lib/models/Settings';
+import Order from '@/lib/models/Order';
+import Product from '@/lib/models/Product';
+import Notification from '@/lib/models/Notification';
 
 export async function GET() {
   try {
@@ -35,7 +38,50 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     await dbConnect();
-    const { bikePrices, carPrices, resetTokens, fixTokens } = await request.json();
+    const { bikePrices, carPrices, resetTokens, fixTokens, systemReset } = await request.json();
+
+    // Handle system reset - DANGER: This deletes ALL data
+    if (systemReset) {
+      console.log('SYSTEM RESET INITIATED - Deleting all data...');
+      
+      // Delete all orders
+      const ordersDeleted = await Order.deleteMany({});
+      console.log(`Deleted ${ordersDeleted.deletedCount} orders`);
+      
+      // Delete all products
+      const productsDeleted = await Product.deleteMany({});
+      console.log(`Deleted ${productsDeleted.deletedCount} products`);
+      
+      // Delete all notifications
+      const notificationsDeleted = await Notification.deleteMany({});
+      console.log(`Deleted ${notificationsDeleted.deletedCount} notifications`);
+      
+      // Reset settings to defaults
+      let settings = await Settings.findOne();
+      if (settings) {
+        settings.bikePrices = [100, 150, 200];
+        settings.carPrices = [100, 150, 200];
+        settings.currentTokenNumber = 0;
+        await settings.save();
+      } else {
+        settings = new Settings({
+          bikePrices: [100, 150, 200],
+          carPrices: [100, 150, 200],
+          currentTokenNumber: 0
+        });
+        await settings.save();
+      }
+      
+      console.log('SYSTEM RESET COMPLETED');
+      return NextResponse.json({ 
+        message: 'System reset completed successfully',
+        deleted: {
+          orders: ordersDeleted.deletedCount,
+          products: productsDeleted.deletedCount,
+          notifications: notificationsDeleted.deletedCount
+        }
+      });
+    }
 
     let settings = await Settings.findOne();
     if (!settings) {
