@@ -162,7 +162,48 @@ export default function ServicePage() {
       <div className="max-w-6xl mx-auto p-4">
         <div className="space-y-4">
           
-          {/* Order Summary - Moved to top */}
+          {/* Quick Selection */}
+          <div className="card p-4">
+            <h2 className="text-base font-bold text-slate-900 mb-3">Quick Selection</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+              {prices.map((price) => (
+                <button
+                  key={price}
+                  onClick={() => handlePriceSelect(price)}
+                  className={`price-card p-4 text-center ${selectedPrice === price ? 'selected' : ''}`}
+                >
+                  <span className="text-2xl font-black text-slate-900">{price}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Amount and Vehicle Number - Side by Side */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="card p-4">
+              <h2 className="text-base font-bold text-slate-900 mb-3">Custom Amount</h2>
+              <input
+                type="number"
+                value={customAmount}
+                onChange={(e) => handleCustomAmountChange(e.target.value)}
+                placeholder="Enter amount..."
+                className="w-full px-4 py-3 text-xl font-bold rounded-lg"
+              />
+            </div>
+
+            <div className="card p-4">
+              <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number (Optional)</h2>
+              <input
+                type="text"
+                value={vehicleNo}
+                onChange={(e) => setVehicleNo(e.target.value)}
+                placeholder="Enter vehicle number..."
+                className="w-full px-4 py-3 text-lg font-medium rounded-lg"
+              />
+            </div>
+          </div>
+
+          {/* Order Summary */}
           <div className="summary-panel p-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <div className="lg:col-span-1">
@@ -227,70 +268,25 @@ export default function ServicePage() {
             </div>
           </div>
 
-          {/* Price Selection */}
-          <div className="space-y-4">
-            
-            {/* Quick Prices */}
+          {/* Products */}
+          {products.length > 0 && (
             <div className="card p-4">
-              <h2 className="text-base font-bold text-slate-900 mb-3">Quick Selection</h2>
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-                {prices.map((price) => (
+              <h2 className="text-base font-bold text-slate-900 mb-3">Services</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {products.map((product) => (
                   <button
-                    key={price}
-                    onClick={() => handlePriceSelect(price)}
-                    className={`price-card p-4 text-center ${selectedPrice === price ? 'selected' : ''}`}
+                    key={product._id}
+                    onClick={() => handlePriceSelect(product.price)}
+                    className={`price-card p-3 text-left ${selectedPrice === product.price ? 'selected' : ''}`}
                   >
-                    <span className="text-2xl font-black text-slate-900">{price}</span>
+                    <h3 className="font-bold text-slate-900 mb-1 text-sm truncate">{product.name}</h3>
+                    <p className="text-xl font-black text-slate-700">{product.price}</p>
                   </button>
                 ))}
               </div>
             </div>
+          )}
 
-            {/* Products */}
-            {products.length > 0 && (
-              <div className="card p-4">
-                <h2 className="text-base font-bold text-slate-900 mb-3">Services</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {products.map((product) => (
-                    <button
-                      key={product._id}
-                      onClick={() => handlePriceSelect(product.price)}
-                      className={`price-card p-3 text-left ${selectedPrice === product.price ? 'selected' : ''}`}
-                    >
-                      <h3 className="font-bold text-slate-900 mb-1 text-sm truncate">{product.name}</h3>
-                      <p className="text-xl font-black text-slate-700">{product.price}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Custom Amount and Vehicle Number - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="card p-4">
-                <h2 className="text-base font-bold text-slate-900 mb-3">Custom Amount</h2>
-                <input
-                  type="number"
-                  value={customAmount}
-                  onChange={(e) => handleCustomAmountChange(e.target.value)}
-                  placeholder="Enter amount..."
-                  className="w-full px-4 py-3 text-xl font-bold rounded-lg"
-                />
-              </div>
-
-              <div className="card p-4">
-                <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number (Optional)</h2>
-                <input
-                  type="text"
-                  value={vehicleNo}
-                  onChange={(e) => setVehicleNo(e.target.value)}
-                  placeholder="Enter vehicle number..."
-                  className="w-full px-4 py-3 text-lg font-medium rounded-lg"
-                />
-              </div>
-            </div>
-
-          </div>
         </div>
       </div>
     </div>
