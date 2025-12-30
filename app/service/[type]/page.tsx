@@ -192,7 +192,7 @@ export default function ServicePage() {
             </div>
 
             <div className="card p-4">
-              <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number (Optional)</h2>
+              <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number</h2>
               <input
                 type="text"
                 value={vehicleNo}
