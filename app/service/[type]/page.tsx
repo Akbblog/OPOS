@@ -139,18 +139,18 @@ export default function ServicePage() {
   return (
     <div className="min-h-screen bg-slate-100">
       {/* Top Bar */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="bg-white border-b border-slate-200 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
             >
-              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-2xl font-bold text-slate-900 uppercase">{category} SERVICE</h1>
+            <h1 className="text-xl font-bold text-slate-900 uppercase">SERVICE</h1>
           </div>
           <div className={`badge ${category === 'bike' ? 'badge-bike' : 'badge-car'}`}>
             {category}
@@ -159,45 +159,45 @@ export default function ServicePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-3 gap-6">
+      <div className="max-w-6xl mx-auto p-4">
+        <div className="grid lg:grid-cols-4 gap-4">
           
           {/* Left Panel - Order Summary */}
           <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="summary-panel p-6 sticky top-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Order Summary</h2>
+            <div className="summary-panel p-4">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
               
               {/* Selected Amount Display */}
-              <div className="bg-slate-50 rounded-xl p-6 mb-6">
+              <div className="bg-slate-50 rounded-lg p-4 mb-4">
                 <div className="text-center">
-                  <p className="text-sm text-slate-500 mb-2 uppercase tracking-wide font-medium">Total Amount</p>
-                  <p className="text-5xl font-black text-slate-900">
+                  <p className="text-sm text-slate-500 mb-1 uppercase tracking-wide font-medium">Total Amount</p>
+                  <p className="text-4xl font-black text-slate-900">
                     {amount > 0 ? amount.toFixed(0) : '0'}
                   </p>
-                  <p className="text-lg text-slate-500 mt-1">PKR</p>
+                  <p className="text-sm text-slate-500 mt-1">PKR</p>
                 </div>
               </div>
 
               {/* Service Type */}
-              <div className="flex justify-between items-center py-3 border-b border-slate-100">
-                <span className="text-slate-500 font-medium">Service Type</span>
-                <span className="text-slate-900 font-bold uppercase">{category}</span>
+              <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                <span className="text-slate-500 text-sm font-medium">Service Type</span>
+                <span className="text-slate-900 font-bold uppercase text-sm">{category}</span>
               </div>
 
               {/* Status */}
-              <div className="flex justify-between items-center py-3 mb-6">
-                <span className="text-slate-500 font-medium">Status</span>
-                <span className={`font-bold ${amount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+              <div className="flex justify-between items-center py-2 mb-4">
+                <span className="text-slate-500 text-sm font-medium">Status</span>
+                <span className={`font-bold text-sm ${amount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
                   {amount > 0 ? 'Ready' : 'Select Amount'}
                 </span>
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <button
                   onClick={handlePlaceOrder}
                   disabled={amount <= 0 || isProcessing}
-                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-3 text-base flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <>
@@ -216,7 +216,7 @@ export default function ServicePage() {
 
                 <button
                   onClick={handleClear}
-                  className="btn-secondary w-full py-3 text-base"
+                  className="btn-secondary w-full py-2 text-sm"
                 >
                   Clear
                 </button>
@@ -225,19 +225,19 @@ export default function ServicePage() {
           </div>
 
           {/* Right Panel - Price Selection */}
-          <div className="lg:col-span-2 space-y-6 order-1 lg:order-2">
+          <div className="lg:col-span-3 space-y-4 order-1 lg:order-2">
             
             {/* Quick Prices */}
-            <div className="card p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Selection</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="card p-4">
+              <h2 className="text-base font-bold text-slate-900 mb-3">Quick Selection</h2>
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                 {prices.map((price) => (
                   <button
                     key={price}
                     onClick={() => handlePriceSelect(price)}
-                    className={`price-card p-6 text-center ${selectedPrice === price ? 'selected' : ''}`}
+                    className={`price-card p-4 text-center ${selectedPrice === price ? 'selected' : ''}`}
                   >
-                    <span className="text-3xl font-black text-slate-900">{price}</span>
+                    <span className="text-2xl font-black text-slate-900">{price}</span>
                   </button>
                 ))}
               </div>
@@ -245,17 +245,17 @@ export default function ServicePage() {
 
             {/* Products */}
             {products.length > 0 && (
-              <div className="card p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">Services</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="card p-4">
+                <h2 className="text-base font-bold text-slate-900 mb-3">Services</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {products.map((product) => (
                     <button
                       key={product._id}
                       onClick={() => handlePriceSelect(product.price)}
-                      className={`price-card p-5 text-left ${selectedPrice === product.price ? 'selected' : ''}`}
+                      className={`price-card p-3 text-left ${selectedPrice === product.price ? 'selected' : ''}`}
                     >
-                      <h3 className="font-bold text-slate-900 mb-1 truncate">{product.name}</h3>
-                      <p className="text-2xl font-black text-slate-700">{product.price}</p>
+                      <h3 className="font-bold text-slate-900 mb-1 text-sm truncate">{product.name}</h3>
+                      <p className="text-xl font-black text-slate-700">{product.price}</p>
                     </button>
                   ))}
                 </div>
@@ -263,26 +263,26 @@ export default function ServicePage() {
             )}
 
             {/* Custom Amount */}
-            <div className="card p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Custom Amount</h2>
+            <div className="card p-4">
+              <h2 className="text-base font-bold text-slate-900 mb-3">Custom Amount</h2>
               <input
                 type="number"
                 value={customAmount}
                 onChange={(e) => handleCustomAmountChange(e.target.value)}
                 placeholder="Enter amount..."
-                className="w-full px-5 py-4 text-2xl font-bold rounded-xl"
+                className="w-full px-4 py-3 text-xl font-bold rounded-lg"
               />
             </div>
 
             {/* Vehicle Number */}
-            <div className="card p-6">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">Vehicle Number (Optional)</h2>
+            <div className="card p-4">
+              <h2 className="text-base font-bold text-slate-900 mb-3">Vehicle Number (Optional)</h2>
               <input
                 type="text"
                 value={vehicleNo}
                 onChange={(e) => setVehicleNo(e.target.value)}
                 placeholder="Enter vehicle number..."
-                className="w-full px-5 py-4 text-xl font-medium rounded-xl"
+                className="w-full px-4 py-3 text-lg font-medium rounded-lg"
               />
             </div>
 
